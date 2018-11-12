@@ -297,7 +297,7 @@ if __name__ == '__main__':
                       help='Number of leaf switches in the system.')
     parser.add_option('-p', '--maxspines', type=int, default=18,
                       help='Number of spine switches in the system.')
-    parser.add_option('-n', '--numsw', type=int, default=24,
+    parser.add_option('-n', '--numsw', type=int, default=28,
                       help='Number of switches to process.')
     parser.add_option('-t', '--startswitch', type=int, default=1,
                       help='Start displaying from specified switch.')
@@ -460,7 +460,7 @@ if __name__ == '__main__':
             except (ValueError,IndexError):
                 timeout -= 1
         if timeout == 0:
-            logger.error('Rx or tx rates not a number, unexpected output from switch: {}'.format(output[i+1]))
+            logger.debug('Rx or tx rates not a number, unexpected output from switch: {}'.format(output[i+1]))
         
         # Create rates matrix
         cols = len(switch_dict.keys())+1
@@ -748,7 +748,7 @@ if __name__ == '__main__':
     #            switch_dict[sw_name][eth]['remote_switch'] = remote
     #logger.info('Done mapping switches.')
 
-    curses.wrapper(draw, switch_dict, ssh_list)
+    curses.wrapper(draw, switch_dict, new_ssh_list)
     #matrix = get_discard(switch_dict, ssh_list)
     #import IPython;IPython.embed()
 
