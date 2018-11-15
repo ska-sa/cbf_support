@@ -425,14 +425,17 @@ if __name__ == '__main__':
         for i in range(2):
             all_output = run_threaded_cmd(ssh_list,cmd)
             for output in all_output:
-                sw_name_idx = [i for i,s in enumerate(output) if 'CBFSW' in s][0]
-                sw_name = output[sw_name_idx].split(' ')[0].split('-')[-1]
-                for line in output:
-                    if line.startswith('Eth'):
-                        eth = line
-                    if line.startswith('Remote system'):
-                        remote = line.split(' ')[-1]
-                        switch_dict[sw_name][eth]['remote_switch'] = remote
+                try:
+                    sw_name_idx = [i for i,s in enumerate(output) if 'CBFSW' in s][0]
+                    sw_name = output[sw_name_idx].split(' ')[0].split('-')[-1]
+                    for line in output:
+                        if line.startswith('Eth'):
+                            eth = line
+                        if line.startswith('Remote system'):
+                            remote = line.split(' ')[-1]
+                            switch_dict[sw_name][eth]['remote_switch'] = remote
+                except IndexError:
+                    pass
         if log:
             logger.info('Done mapping switches.')
         
