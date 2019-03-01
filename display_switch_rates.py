@@ -545,6 +545,8 @@ if __name__ == '__main__':
         col_title = curses.newpad(1, m_cols*colw)
         row_title = curses.newpad(m_rows,colw)
         disp_wind = curses.newpad(m_rows,m_cols*colw)
+        top_cornr = curses.newpad(1,colw)
+        top_cornr.addstr(0,0, 'Rates', curses.A_BOLD | curses.A_UNDERLINE)
         # Data display block upper left-hand corner
         dminrow = 0
         dmincol = 0
@@ -574,6 +576,7 @@ if __name__ == '__main__':
         stdscr.nodelay(1)
         try:
             data_rdy = True
+            blink = True
             pool = ThreadPool(processes=1)
             while True:
                 if data_rdy:
@@ -661,6 +664,11 @@ if __name__ == '__main__':
                             if thread_obj.ready():
                                 matrix = thread_obj.get()
                                 data_rdy = True
+                                if blink:
+                                    top_cornr.addstr(0,0, 'Rates', curses.A_BOLD | curses.A_UNDERLINE | curses.A_REVERSE)
+                                else:
+                                    top_cornr.addstr(0,0, 'Rates', curses.A_BOLD | curses.A_UNDERLINE)
+                                blink = not(blink)
                             else:
                                 time.sleep(0.1)
                         except:
@@ -693,6 +701,7 @@ if __name__ == '__main__':
                 disp_wind.refresh(dminrow,dmincol,dwminrow,dwmincol,dwmaxrow,dwmaxcol)
                 col_title.refresh(cminrow,cmincol,ctminrow,ctmincol,ctmaxrow,ctmaxcol)
                 row_title.refresh(rminrow,rmincol,rtminrow,rtmincol,rtmaxrow,rtmaxcol)
+                top_cornr.refresh(0,0,0,0,1,colw-1)
         except KeyboardInterrupt:
             return True
 
@@ -730,7 +739,7 @@ if __name__ == '__main__':
             try:
                 host_name = None
                 for ln in output:
-                    if ln.find('host') != -1:
+                    if 'host ' in ln:
                         host_name = ln.split()[2]
                 sw_name_idx = [i for i,s in enumerate(output) if 'CBFSW' in s][0]
                 sw_name = output[sw_name_idx].split(' ')[0].split('-')[-1]
@@ -742,6 +751,7 @@ if __name__ == '__main__':
                 for ssh_obj in ssh_list:
                     if ssh_obj.hostname == host_name:
                         new_ssh_list.append(ssh_obj)
+        
             except IndexError:
                 if host_name:
                     logger.error('Switch output malformed for {}:\n{}'.format(host_name,output))
@@ -750,7 +760,7 @@ if __name__ == '__main__':
                 _null = raw_input("Press any key to continue...")
         logger.info('Done mapping switches.')
 
-        #matrix = get_rates(switch_dict, ssh_list)
+        #matrix = get_rates(switch_dict, new_ssh_list)
         curses.wrapper(draw, switch_dict, new_ssh_list)
         exit = True
 

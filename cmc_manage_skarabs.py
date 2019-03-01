@@ -285,13 +285,18 @@ class ManageSkarabs:
                 assert reply.reply_ok()
             except AssertionError:
                 logger.error('Adding skarab not successful:\n{}'.format(reply.arguments[1:]))
-
-        now = int(time.time())+1
-        var_set('resources', 'skarab', 'string', ':{}:type'.format(skarab))
-        var_set('resources', mode, 'string', ':{}:mode'.format(skarab))
-        var_set('resources', switch, 'string', ':{}:switch'.format(skarab))
-        var_set('resources', 'standby', 'string', ':{}:status'.format(skarab))
-        var_set('resources', now, 'string', ':{}:when'.format(skarab))
+        try:
+            ip_addr = self._getent(skarab).split()
+            ip_addr = ip_addr[0]
+            now = int(time.time())+1
+            var_set('resources', 'skarab', 'string', ':{}:type'.format(skarab))
+            var_set('resources', mode, 'string', ':{}:mode'.format(skarab))
+            var_set('resources', switch, 'string', ':{}:switch'.format(skarab))
+            var_set('resources', 'standby', 'string', ':{}:status'.format(skarab))
+            var_set('resources', now, 'string', ':{}:when'.format(skarab))
+            var_set('resources', ip_addr, 'string', ':{}:ip'.format(skarab))
+        except AttributeError:
+            logger.error('Adding skarab not successful: No IP entry found for {}'.format(skarab))
 
     def _mark_up(self, katcp_obj, skarab):
         try:
@@ -379,6 +384,18 @@ class ManageSkarabs:
         try:
             response = subprocess.check_output(
                 ['ping', '-c', '1', host],
+                stderr=subprocess.STDOUT,
+                universal_newlines=True
+            )
+        except subprocess.CalledProcessError:
+            response = None
+        return response
+
+    def _getent(self, host):
+        import subprocess
+        try:
+            response = subprocess.check_output(
+                ['getent', 'hosts', host],
                 stderr=subprocess.STDOUT,
                 universal_newlines=True
             )
