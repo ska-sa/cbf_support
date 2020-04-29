@@ -880,7 +880,7 @@ if __name__ == '__main__':
                                             row_title.addstr(i + blankc - 1, 0, matrix[12][i][0], curses.color_pair(10) | curses.A_BOLD)
                                         if matrix[2][i][j] > 0:  # leaf discards, set backgrd colour for text yellow
                                             disp_wind.addstr(i + blankc - 1, (j - 1) * colw, val, curses.color_pair(9))  # 9=YELLOW for discards
-                                            col_title.addstr(0, (j - 1) * colw,'{0:>{1}}'.format(matrix[0][0][j], colw), curses.color_pair(10) | curses.A_BOLD | curses.A_UNDERLINE)
+                                            col_title.addstr(0, (j - 1) * colw,'{0:>{1}}'.format(matrix[0][0][j], colw), curses.color_pair(9) | curses.A_BOLD | curses.A_UNDERLINE)
                                             row_title.addstr(i + blankc - 1, 0, matrix[12][i][0], curses.color_pair(9) | curses.A_BOLD)
 
                                     if i in range(38, 73, 2):  # leaf ingress ports 1/19 - 1/36
@@ -890,7 +890,7 @@ if __name__ == '__main__':
                                             row_title.addstr(i + blankc - 1, 0, matrix[12][i][0], curses.color_pair(10) | curses.A_BOLD)
                                         if matrix[2][i][j] > 0: # spines discards, set backgrd colour for text yellow
                                             disp_wind.addstr(i + blankc - 1, (j - 1) * colw, val, curses.color_pair(9))  # 9=YELLOW for discards
-                                            col_title.addstr(0, (j - 1) * colw, '{0:>{1}}'.format(matrix[0][0][j], colw), curses.color_pair(10) | curses.A_BOLD | curses.A_UNDERLINE)
+                                            col_title.addstr(0, (j - 1) * colw, '{0:>{1}}'.format(matrix[0][0][j], colw), curses.color_pair(9) | curses.A_BOLD | curses.A_UNDERLINE)
                                             row_title.addstr(i + blankc - 1, 0, matrix[12][i][0], curses.color_pair(9) | curses.A_BOLD)
 
                                     if i in range(37, 72, 2):  # egress to spine ports 1/19 - 1/36
