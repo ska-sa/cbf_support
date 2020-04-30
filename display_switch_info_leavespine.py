@@ -99,7 +99,8 @@ class MySSH:
 
         return self.transport is not None
 
-    def run(self, cmd, input_data=' ', timeout=10):
+    # def run(self, cmd, input_data=' ', timeout=10):
+    def run(self, cmd, input_data=' ', timeout=30):
         '''
         Run a command with optional input data.
 
@@ -142,6 +143,14 @@ class MySSH:
         session.send(cmd)
         session.send('\n')
         output, status = self._run_poll(session, timeout, input_data)
+        #ooutput, status = self._run_poll(session, timeout, input_data)
+        ##########################################
+        # if len(output) < 3000:
+        #     for i in range(0, 5):
+        #         output, status = self._run_poll(session, timeout, input_data)
+        #         if len(output) > 3000:
+        #             break
+        ##########################################
         # status = session.recv_exit_status()
         self.debug('output size %d' % (len(output)))
         self.debug('status %d' % (status))
@@ -396,6 +405,7 @@ if __name__ == '__main__':
         output += ('=' * 64 + '\n')
         outp = rem_extra_chars(outp)
         output += outp
+        x = output
         return output
 
 
@@ -410,9 +420,9 @@ if __name__ == '__main__':
             thread_obj[i] = pool.apply_async(run_cmd, args=(ssh_obj, cmd), kwds={'enable': enable})
         for i, ssh_obj in enumerate(ssh_list):  # retrieve/get data from each thread
             output.append(thread_obj[i].get())
+            x = thread_obj[i].get()
         pool.close()
         pool.join()
-        #IPython.embed()
         return [x.split('\n') for x in
                 output]  # list comprehension splits string into multiple strings at '\n', and stores in list
 
@@ -623,7 +633,7 @@ if __name__ == '__main__':
                         rem_sw = re.split('(\d+)', data['remote_switch']) #seperate number/digit and return list
 
                         try:
-                            rem_sw_nr = int(rem_sw[-2])
+                            rem_sw_nr = int(rem_sw[-2])  # [-2] second last index
 
                         except (ValueError, IndexError):
                             logger.error('Remote switch name from LLDP does not end in a number: {}'.format(data['remote_switch']))
@@ -631,7 +641,7 @@ if __name__ == '__main__':
                             raise ValueError
                         #TODO add rates, errors, discards etc. for spines
                         try:
-                            matrix[6][0][idx] = switch   # stores name of spine switch 'Sx' in matrix for column headings
+                            matrix[6][0][idx] = 'KK'   # stores name of spine switch 'Sx' in matrix for column headings
                             matrix[7][0][idx] = switch
                             matrix[8][0][idx] = switch
                             matrix[9][0][idx] = switch
@@ -990,12 +1000,27 @@ if __name__ == '__main__':
             ssh_list.append(ssh_obj) # append only connected objects from full_ssh_list to ssh_list
     logger.info('SSH connections established.')
 
+    test = []
+    #############
+    for ssh_obj in ssh_list:
+        test.append(ssh_obj.hostname)
+    ############
+
     # Map switches:
     logger.info('Mapping switch connections using LLDP')
     # Create 3 level dictionary for switch info
     switch_dict = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     cmd = 'show lldp interfaces ethernet remote | include "Eth|Remote system name"'
-    all_output = run_threaded_cmd(ssh_list, cmd)
+    all_output = run_threaded_cmd(ssh_list, cmd)  # 1st run
+    # #######for checking spines not replying #if length msg < 15############
+    # for i,x in enumerate(all_output):
+    #     host_name = None
+    #     for ln in x:
+    #         if ln.find('CBFSW-S') != -1:
+    #             host_name = ln.split()[0]
+    #             if len(x) < 20:
+    #                 print i, host_name, len(x)
+    # #######################################################################
     new_ssh_list = []
     for output in all_output:
         try:
@@ -1019,11 +1044,46 @@ if __name__ == '__main__':
             else:
                 logger.error('Switch output malformed while mapping switches: {}'.format(output))
             _null = raw_input("Press any key to continue...")
+
+    all_output = run_threaded_cmd(ssh_list, cmd)  # 2nd run
+    new_ssh_list = []
+    for output in all_output:
+        try:
+            host_name = None
+            for ln in output:
+                if ln.find('host') != -1:
+                    host_name = ln.split()[2]
+            sw_name_idx = [i for i, s in enumerate(output) if 'CBFSW' in s][0]
+            sw_name = output[sw_name_idx].split(' ')[0].split('-')[-1]
+            rem_port_id = [i for i, v in enumerate(output) if 'Remote port-id' in v]
+            for idx in rem_port_id:
+                eth = output[idx - 1]
+                remote = output[idx + 1].split(' ')[-1]
+                switch_dict[sw_name][eth]['remote_switch'] = remote
+            for ssh_obj in ssh_list:
+                if ssh_obj.hostname == host_name:
+                    new_ssh_list.append(ssh_obj)
+        except IndexError:
+            if host_name:
+                logger.error('Switch output malformed for {}:\n{}'.format(host_name, output))
+            else:
+                logger.error('Switch output malformed while mapping switches: {}'.format(output))
+            _null = raw_input("Press any key to continue...")
+
     logger.info('Done mapping switches.')
+    # ####for testing####################################################################################################
+    # for switch in switch_dict.keys():  # ['S1','S2','S3'.....]
+    #     if switch.startswith('S'):
+    #         for port, data in switch_dict[switch].iteritems():  # get keys and values in 'switch_dict' in 'Sx'
+    #             if data.has_key('remote_switch'):  # has_key returns true if 'remote_switch' is in dictionary
+    #                 print data
+    #                 rem_sw = re.split('(\d+)', data['remote_switch'])  # seperate number/digit and return list
+    # ####for testing###################################################################################################
     matrix = create_matrix()  # create empty 3-D matrix
     matrix = get_discard(switch_dict, ssh_list, matrix)
     matrix = get_discard(switch_dict, ssh_list, matrix)  # called twice to populate matrix with previous values
-    curses.wrapper(draw, switch_dict, new_ssh_list, matrix)
+    #curses.wrapper(draw, switch_dict, new_ssh_list, matrix)
+    curses.wrapper(draw, switch_dict, ssh_list, matrix)
     close_ssh(ssh_list)
 
 # ===================================================================================================================
