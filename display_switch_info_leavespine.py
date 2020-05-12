@@ -914,16 +914,16 @@ if __name__ == '__main__':
                                             row_title.addstr(i + blankc - 1, 0, matrix[12][i][0], curses.color_pair(9) | curses.A_BOLD)
 
                                     if 0 < i < 37 or i in range(38, 73, 2):  # for ports 1/1 - 1/18 or ingress ports 1/19 - 1/36
-                                        if time.time() - matrix[3][i][j] > 10:  # switch status, set colour scheme, no response in 6 sec
-                                            disp_wind.addstr(i + blankc - 1, (j - 1) * colw, val, curses.color_pair(11))  # 11=WHITE for no switch reply
-                                            col_title.addstr(0, (j - 1) * colw, '{0:>{1}}'.format(matrix[0][0][j], colw), curses.color_pair(11) | curses.A_BOLD | curses.A_UNDERLINE)  # BLACK
+                                        if time.time() - matrix[3][i][j] > 10:  # switch status, set colour scheme, no response in 10 sec
+                                            disp_wind.addstr(i + blankc - 1, (j - 1) * colw, val, curses.color_pair(2) | curses.A_BOLD)  # 11=BLACK BOLD text for no switch reply
+                                            #col_title.addstr(0, (j - 1) * colw, '{0:>{1}}'.format(matrix[0][0][j], colw), curses.color_pair(11) | curses.A_BOLD | curses.A_UNDERLINE)  # BLACK
                                             #row_title.addstr(i + blankc - 1, 0, matrix[12][i][0], curses.color_pair(11) | curses.A_BOLD)
 
                                     if i in range(37, 72, 2):  # for egress to spine ports 1/19 - 1/36
-                                        if time.time() - matrix[15][i][j] > 10:  # switch status, set colour scheme, no response in 6 sec
-                                            disp_wind.addstr(i + blankc - 1, (j - 1) * colw, val, curses.color_pair(11))  # 11=WHITE for no switch reply
+                                        if time.time() - matrix[15][i][j] > 10:  # switch status, set colour scheme, no response in 10 sec
+                                            disp_wind.addstr(i + blankc - 1, (j - 1) * colw, val, curses.color_pair(2) | curses.A_BOLD)  # 11=BLACK BOLD text for no switch reply
                                             #col_title.addstr(0, (j - 1) * colw, '{0:>{1}}'.format(matrix[0][0][j], colw), curses.color_pair(11) | curses.A_BOLD | curses.A_UNDERLINE)  # BLACK
-                                            row_title.addstr(i + blankc - 1, 0, matrix[12][i][0], curses.color_pair(11) | curses.A_BOLD)
+                                            #row_title.addstr(i + blankc - 1, 0, matrix[12][i][0], curses.color_pair(11) | curses.A_BOLD)
 
                                     if (i - 1) % 2 == 1:
                                         disp_wind.addstr(i + blankc - 1 + 1, (j - 1) * colw, ' ')
