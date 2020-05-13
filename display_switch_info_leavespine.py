@@ -504,7 +504,7 @@ if __name__ == '__main__':
                             switch_dict[sw_name][eth]['sw_status'] = time.time()  # stores current time in switch_dict
                             # switch_dict['L9']['Eth1/1']
                 good_output = True
-            except (ValueError, IndexError):
+            except (ValueError, IndexError, UnboundLocalError):
                 timeout -= 1
 
         if timeout == 0:
@@ -755,8 +755,10 @@ if __name__ == '__main__':
         curses.use_default_colors()
         curses.init_pair(1, curses.COLOR_WHITE, -1)
         curses.init_pair(2, curses.COLOR_BLACK, -1)
-        curses.init_pair(3, curses.COLOR_BLUE, -1)
-        curses.init_pair(4, curses.COLOR_BLUE, -1)
+        # curses.init_pair(3, curses.COLOR_BLUE, -1)
+        # curses.init_pair(4, curses.COLOR_BLUE, -1)
+        curses.init_pair(3, curses.COLOR_YELLOW, -1)
+        curses.init_pair(4, curses.COLOR_YELLOW, -1)
         curses.init_pair(5, curses.COLOR_GREEN, -1)
         curses.init_pair(6, curses.COLOR_GREEN, -1)
         curses.init_pair(7, curses.COLOR_RED, -1)
