@@ -340,9 +340,9 @@ def comms():
         time.sleep(2)
         matrix_received = 0
         s = socket.socket(IPV4, TCP)  # create socket object
-        #print 'Connecting to server...'
+        logger.info('Connecting to server.')
         s.connect((IPADDRESS, PORT))  # waits here and attempt connection to server
-        #print 'Connection established. \nReceiving data. \nStarting display.'
+        logger.info('Connection established.')
         full_msg = b''  # create empty variable
         new_msg = True  # set new_msg flag
         while True:
@@ -379,25 +379,14 @@ def comms():
         logger.info("Generic Error: %s" % e)
         s.close()
 
-# def display(shared_dict):
-#     while shared_dict['terminate'] == False:
-#         time.sleep(3)
-#         x = shared_dict['c']
-#         y = shared_dict['t']
-#         # print len(matrix)
-#         #print 'shared_dict c: {}'.format(x)
-#         print 'shared_dict t: {}'.format(y)
-#     logger.info('Display thread has ended.')
-
-
 
 ####### MAIN #######
 
 if __name__ == '__main__':
 
     try:
-        matrix_3d = comms()
-        curses.wrapper(draw, matrix_3d)
+        matrix_3d = comms()  #  request matrix of data from server
+        curses.wrapper(draw, matrix_3d)  # executes draw function with curses
 
     except Exception as e:
         logger.info("Error: %s" % e)
