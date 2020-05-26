@@ -1,13 +1,16 @@
 import socket
 import pickle
 import logging
+import logging.handlers as handlers
 import sys
 import multiprocessing
 import time
 import sys
 import curses
+# import threading
+from multiprocessing.pool import ThreadPool
 import datetime
-#import IPython
+# import IPython
 
 ####### CONSTANTS ##########
 
@@ -20,23 +23,36 @@ IPADDRESS = 'cmc2.cbf.mkat.karoo.kat.ac.za'
 # IPADDRESS = 'localhost'  # localhost or 127.0.0.1
 
 # Setup the logger
-loglevel = 'WARNING'
-logger = logging.getLogger('mellanox_switch_comms')
+# loglevel = 'WARNING'
+# logger = logging.getLogger('mellanox_switch_comms')
+# level = logging.getLevelName(loglevel)
+# logger.setLevel(level)
+# fmt = '%(asctime)s %(levelname)s %(funcName)s: %(message)s'
+# #fmt = '%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s'
+# #fmt = '%(asctime)s %(levelname)s: %(message)s %(threadName)s'
+# date_fmt = '%Y-%m-%d %H:%M:%S'
+# logging_format = logging.Formatter(fmt, date_fmt)
+# handler = logging.StreamHandler()
+# handler.setFormatter(logging_format)
+# handler.setLevel(level)
+# logger.addHandler(handler)
+loglevel = 'INFO'
+logger = logging.getLogger('__name__')
 level = logging.getLevelName(loglevel)
 logger.setLevel(level)
-fmt = '%(asctime)s %(levelname)s %(funcName)s: %(message)s'
-#fmt = '%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s'
-#fmt = '%(asctime)s %(levelname)s: %(message)s %(threadName)s'
+# fmt = '%(asctime)s %(funcName)s:%(lineno)d %(message)s'
+# fmt = '%(asctime)s %(levelname)s: %(message)s'
+fmt = '%(asctime)s %(levelname)s - %(funcName)s: %(message)s'
 date_fmt = '%Y-%m-%d %H:%M:%S'
 logging_format = logging.Formatter(fmt, date_fmt)
-handler = logging.StreamHandler()
-handler.setFormatter(logging_format)
-handler.setLevel(level)
-logger.addHandler(handler)
+file_handler = handlers.RotatingFileHandler('clientlog.log', maxBytes=10000, backupCount=2)
+file_handler.setFormatter(logging_format)
+file_handler.setLevel(level)
+logger.addHandler(file_handler)
 
 ####### FUNCTIONS #########
 
-def draw(stdscr, shared_dict):
+def draw(stdscr, _matrix_3d):
     from decimal import Decimal
 
     def fexp(number):  # returns the order of magnitude of number
@@ -50,7 +66,7 @@ def draw(stdscr, shared_dict):
     stdscr.clear()
     lines = curses.LINES  # size of console screen HORI
     cols = curses.COLS  # size of console screen VERT
-    matrix = shared_dict['t']
+    matrix = _matrix_3d
     m_rows = len(matrix[0])
     m_rows = m_rows + (m_rows / 2)  # m_rows = no of rows or lines for drawing matrix
     m_cols = len(matrix[0][0])  # m_cols = no of columns for drawing matrix
@@ -112,11 +128,11 @@ def draw(stdscr, shared_dict):
     try:
         data_rdy = True
         blink = True
-        ###pool = ThreadPool(processes=1)
+        pool = ThreadPool(processes=1)
         while True:
             if data_rdy:
                 data_rdy = False
-                ###thread_obj = pool.apply_async(get_discard, args=(switch_dict, ssh_list, matrix))
+                thread_obj = pool.apply_async(comms)
                 blankc = 0
                 reverse = False
                 # for k, page in enumerate(matrix):
@@ -248,13 +264,13 @@ def draw(stdscr, shared_dict):
                                                          curses.color_pair(9) | curses.A_BOLD)
 
                                 if 0 < i < 37 or i in range(38, 73, 2):  # for ports 1/1 - 1/18 or ingress ports 1/19 - 1/36
-                                    if time.time() - matrix[3][i][j] > 12:  # switch status, set colour scheme, no response in 12 sec
+                                    if time.time() - matrix[3][i][j] > 16:  # switch status, set colour scheme, no response in 16 sec
                                         disp_wind.addstr(i + blankc - 1, (j - 1) * colw, val, curses.color_pair(2)| curses.A_BOLD)  # 11=BLACK BOLD text for no switch reply
                                         # col_title.addstr(0, (j - 1) * colw, '{0:>{1}}'.format(matrix[0][0][j], colw),curses.color_pair(11) | curses.A_BOLD | curses.A_UNDERLINE)  # BLACK
                                         # row_title.addstr(i + blankc - 1, 0, matrix[12][i][0], curses.color_pair(11) | curses.A_BOLD)
 
                                 if i in range(37, 72, 2):  # for egress to spine ports 1/19 - 1/36
-                                    if time.time() - matrix[15][i][j] > 12:  # switch status, set colour scheme, no response in 12 sec
+                                    if time.time() - matrix[15][i][j] > 16:  # switch status, set colour scheme, no response in 16 sec
                                         disp_wind.addstr(i + blankc - 1, (j - 1) * colw, val, curses.color_pair(2) | curses.A_BOLD)  # 11=BLACK BOLD text for no switch reply
                                         # col_title.addstr(0, (j - 1) * colw, '{0:>{1}}'.format(matrix[0][0][j], colw), curses.color_pair(11) | curses.A_BOLD | curses.A_UNDERLINE)  # BLACK
                                         # row_title.addstr(i + blankc - 1, 0, matrix[12][i][0], curses.color_pair(11) | curses.A_BOLD)
@@ -268,17 +284,16 @@ def draw(stdscr, shared_dict):
             else:
                 char = stdscr.getch()
                 if char == curses.ERR:
-                    matrix = shared_dict['t']
-                    data_rdy = True
-                    # if blink:
-                    #     top_cornr.addstr(0, 0, 'Rates', curses.A_BOLD | curses.A_UNDERLINE | curses.A_REVERSE)
-                    # else:
-                    #     top_cornr.addstr(0, 0, 'Rates', curses.A_BOLD | curses.A_UNDERLINE)
-                    #     blink = not (blink)
-                    if shared_dict['c']:
-                        top_cornr.addstr(0, 0, 'Rates', curses.A_BOLD | curses.A_UNDERLINE | curses.A_REVERSE)
+                    if thread_obj.ready():
+                        matrix = thread_obj.get()
+                        data_rdy = True
+                        if blink:
+                            top_cornr.addstr(0, 0, 'Rates', curses.A_BOLD | curses.A_UNDERLINE | curses.A_REVERSE)
+                        else:
+                            top_cornr.addstr(0, 0, 'Rates', curses.A_BOLD | curses.A_UNDERLINE)
+                        blink = not (blink)
                     else:
-                        top_cornr.addstr(0, 0, 'Rates', curses.A_BOLD | curses.A_UNDERLINE)
+                        time.sleep(0.1)
                 else:
                     if char == curses.KEY_LEFT:
                         if dmincol > colw:
@@ -311,64 +326,68 @@ def draw(stdscr, shared_dict):
             col_title.refresh(cminrow, cmincol, ctminrow, ctmincol, ctmaxrow, ctmaxcol)
             row_title.refresh(rminrow, rmincol, rtminrow, rtmincol, rtmaxrow, rtmaxcol)
             top_cornr.refresh(0, 0, 0, 0, 1, colw - 1)
-    except KeyboardInterrupt:
-        pass
+    except KeyboardInterrupt as e:
+        logger.exception('Keyboard Error: %s' % e)
+        logger.info('end of draw')
+        # pass
+    except Exception as e:
+        logger.exception('General Error: %s' % e)
+        logger.info('end of draw')
 
-def comms(shared_dict):
+
+def comms():
     try:
+        time.sleep(2)
+        matrix_received = 0
         s = socket.socket(IPV4, TCP)  # create socket object
         print 'Connecting to server...'
         s.connect((IPADDRESS, PORT))  # waits here and attempt connection to server
-        print 'Connection established. Receiving data...'
+        print 'Connection established. \nReceiving data. \nStarting display.'
+        full_msg = b''  # create empty variable
+        new_msg = True  # set new_msg flag
         while True:
-            full_msg = b''  # create empty variable
-            new_msg = True  # set new_msg flag
-            while True:
-                msg = s.recv(16)  # buffer size 16 bytes for incoming message
-                if new_msg:
-                    msg_len = int(msg[:HEADERSIZE])  # convert value in HEADER(expected message length) to int
-                    new_msg = False  # clear new_msg flag
+            msg = s.recv(16)  # buffer size 16 bytes for incoming message
+            if new_msg:
+                msg_len = int(msg[:HEADERSIZE])  # convert value in HEADER(expected message length) to int
+                new_msg = False  # clear new_msg flag
 
-                full_msg += msg  # append messages
+            full_msg += msg  # append messages
 
-                if len(full_msg) - HEADERSIZE == msg_len:  # execute when complete message is received based on size indicated in HEADER
-                    msg_size = str(sys.getsizeof(full_msg))
-                    matrix_received = pickle.loads(full_msg[HEADERSIZE:])  # unpickle data
-                    matrix_size = str(sys.getsizeof(matrix_received))
-                    shared_dict['t'] = matrix_received
-                    shared_dict['c'] = not shared_dict['c']
-                    logger.info('Full message received: %i Bytes.', int(msg_size))
-                    # logger.info('Matrix size: %s bytes.', matrix_size)
-                    # logger.info('%s       %s       %s', matrix_received[0][0][0], matrix_received[0][0][1],matrix_received[0][0][2])
-                    # logger.info('%s %s     %s', matrix_received[0][1][0], matrix_received[0][1][1],matrix_received[0][1][2])
-                    # print 'New message received.'
-                    # print 'Size = ', msg_size
-                    new_msg = True  # set new_msg flag
-                    full_msg = b""  # clear/empty message
+            if len(full_msg) - HEADERSIZE == msg_len:  # execute when complete message is received based on size indicated in HEADER
+                msg_size = str(sys.getsizeof(full_msg))
+                matrix_received = pickle.loads(full_msg[HEADERSIZE:])  # unpickle data
+                matrix_size = str(sys.getsizeof(matrix_received))
+                logger.info('Full message received: %i Bytes.', int(msg_size))
+                new_msg = True  # set new_msg flag
+                full_msg = b""  # clear/empty message
+            if new_msg:
+                break
+        s.close()
+        logger.info('Socket closed.')
+        return matrix_received
+    
     except socket.error as e:
         #print "Socket Error: %s" % e
         logger.info("Socket Error: %s" % e)
+        s.close()
     except KeyboardInterrupt as e:
         #print("KeyboardInterrupt has been caught.")
         logger.info("Keyboard Error: %s" % e)
+        s.close()
     except Exception as e:
         #print "Generic error: %s" % e
         logger.info("Generic Error: %s" % e)
-    finally:
         s.close()
-        shared_dict['terminate'] = True
-        logger.info('Socket closed')
-        logger.info('Comms thread has ended.')
 
-def display(shared_dict):
-    while shared_dict['terminate'] == False:
-        time.sleep(3)
-        x = shared_dict['c']
-        y = shared_dict['t']
-        # print len(matrix)
-        #print 'shared_dict c: {}'.format(x)
-        print 'shared_dict t: {}'.format(y)
-    logger.info('Display thread has ended.')
+# def display(shared_dict):
+#     while shared_dict['terminate'] == False:
+#         time.sleep(3)
+#         x = shared_dict['c']
+#         y = shared_dict['t']
+#         # print len(matrix)
+#         #print 'shared_dict c: {}'.format(x)
+#         print 'shared_dict t: {}'.format(y)
+#     logger.info('Display thread has ended.')
 
 
 
@@ -377,34 +396,17 @@ def display(shared_dict):
 if __name__ == '__main__':
 
     try:
-        manager = multiprocessing.Manager()
-
-        default_data = 'default'
-
-        shared_dict = manager.dict({'t': default_data, 'c': False, 'terminate': False})
-
-        p1 = multiprocessing.Process(target=comms, args=(shared_dict,))
-        p1.start()  # start comms function
-        while len(shared_dict['t']) != 16:  # wait until matrix message is received
-            time.sleep(0.5)
-        # p2 = multiprocessing.Process(target=display, args=(shared_dict,))
-        # p2.start()
-        p3 = multiprocessing.Process(target=curses.wrapper, args=(draw, shared_dict))
-        p3.start()
-
-        while shared_dict['terminate'] == False:
-            pass
-
-        p1.join()
-        p3.join()
-        logger.info('Server has ended.')
+        matrix_3d = comms()
+        curses.wrapper(draw, matrix_3d)
 
     except Exception as e:
         logger.info("Error: %s" % e)
         logger.info('Server has ended.')
 
+    finally:
+        logger.info('Server has ended.')
+
+
 ####### END OF MAIN #######
 
 
-
-    #
