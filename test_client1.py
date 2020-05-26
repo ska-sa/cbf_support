@@ -340,9 +340,9 @@ def comms():
         time.sleep(2)
         matrix_received = 0
         s = socket.socket(IPV4, TCP)  # create socket object
-        print 'Connecting to server...'
+        #print 'Connecting to server...'
         s.connect((IPADDRESS, PORT))  # waits here and attempt connection to server
-        print 'Connection established. \nReceiving data. \nStarting display.'
+        #print 'Connection established. \nReceiving data. \nStarting display.'
         full_msg = b''  # create empty variable
         new_msg = True  # set new_msg flag
         while True:
