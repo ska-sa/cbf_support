@@ -1,3 +1,5 @@
+# reduced cpu usage of client
+
 import socket
 import pickle
 import logging
@@ -10,6 +12,7 @@ import curses
 # import threading
 from multiprocessing.pool import ThreadPool
 import datetime
+
 # import IPython
 
 ####### CONSTANTS ##########
@@ -18,9 +21,9 @@ HEADERSIZE = 10
 IPV4 = socket.AF_INET
 TCP = socket.SOCK_STREAM
 PORT = 12345
-#IPADDRESS = 'dbelab04'
-IPADDRESS = 'cmc2.cbf.mkat.karoo.kat.ac.za'
-# IPADDRESS = 'localhost'  # localhost or 127.0.0.1
+# IPADDRESS = 'dbelab04'
+# IPADDRESS = 'cmc2.cbf.mkat.karoo.kat.ac.za'
+IPADDRESS = 'localhost'  # localhost or 127.0.0.1
 
 # Setup the logger
 # loglevel = 'WARNING'
@@ -50,9 +53,10 @@ file_handler.setFormatter(logging_format)
 file_handler.setLevel(level)
 logger.addHandler(file_handler)
 
+
 ####### FUNCTIONS #########
 
-def draw(stdscr, _matrix_3d):
+def draw(stdscr, _matrix_3d, s):
     from decimal import Decimal
 
     def fexp(number):  # returns the order of magnitude of number
@@ -132,7 +136,7 @@ def draw(stdscr, _matrix_3d):
         while True:
             if data_rdy:
                 data_rdy = False
-                thread_obj = pool.apply_async(comms)
+                thread_obj = pool.apply_async(comms, args=(s,))
                 blankc = 0
                 reverse = False
                 # for k, page in enumerate(matrix):
@@ -263,15 +267,20 @@ def draw(stdscr, _matrix_3d):
                                         row_title.addstr(i + blankc - 1, 0, matrix[12][i][0],
                                                          curses.color_pair(9) | curses.A_BOLD)
 
-                                if 0 < i < 37 or i in range(38, 73, 2):  # for ports 1/1 - 1/18 or ingress ports 1/19 - 1/36
-                                    if time.time() - matrix[3][i][j] > 16:  # switch status, set colour scheme, no response in 16 sec
-                                        disp_wind.addstr(i + blankc - 1, (j - 1) * colw, val, curses.color_pair(2)| curses.A_BOLD)  # 11=BLACK BOLD text for no switch reply
+                                if 0 < i < 37 or i in range(38, 73,
+                                                            2):  # for ports 1/1 - 1/18 or ingress ports 1/19 - 1/36
+                                    if time.time() - matrix[3][i][
+                                        j] > 16:  # switch status, set colour scheme, no response in 16 sec
+                                        disp_wind.addstr(i + blankc - 1, (j - 1) * colw, val, curses.color_pair(
+                                            2) | curses.A_BOLD)  # 11=BLACK BOLD text for no switch reply
                                         # col_title.addstr(0, (j - 1) * colw, '{0:>{1}}'.format(matrix[0][0][j], colw),curses.color_pair(11) | curses.A_BOLD | curses.A_UNDERLINE)  # BLACK
                                         # row_title.addstr(i + blankc - 1, 0, matrix[12][i][0], curses.color_pair(11) | curses.A_BOLD)
 
                                 if i in range(37, 72, 2):  # for egress to spine ports 1/19 - 1/36
-                                    if time.time() - matrix[15][i][j] > 16:  # switch status, set colour scheme, no response in 16 sec
-                                        disp_wind.addstr(i + blankc - 1, (j - 1) * colw, val, curses.color_pair(2) | curses.A_BOLD)  # 11=BLACK BOLD text for no switch reply
+                                    if time.time() - matrix[15][i][
+                                        j] > 16:  # switch status, set colour scheme, no response in 16 sec
+                                        disp_wind.addstr(i + blankc - 1, (j - 1) * colw, val, curses.color_pair(
+                                            2) | curses.A_BOLD)  # 11=BLACK BOLD text for no switch reply
                                         # col_title.addstr(0, (j - 1) * colw, '{0:>{1}}'.format(matrix[0][0][j], colw), curses.color_pair(11) | curses.A_BOLD | curses.A_UNDERLINE)  # BLACK
                                         # row_title.addstr(i + blankc - 1, 0, matrix[12][i][0], curses.color_pair(11) | curses.A_BOLD)
 
@@ -335,18 +344,18 @@ def draw(stdscr, _matrix_3d):
         logger.info('end of draw')
 
 
-def comms():
+def comms(_s):
     try:
         time.sleep(2)
-        matrix_received = 0
-        s = socket.socket(IPV4, TCP)  # create socket object
-        logger.info('Connecting to server.')
-        s.connect((IPADDRESS, PORT))  # waits here and attempt connection to server
-        logger.info('Connection established.')
+        # matrix_received = 0
+        # s = socket.socket(IPV4, TCP)  # create socket object
+        # logger.info('Connecting to server.')
+        # s.connect((IPADDRESS, PORT))  # waits here and attempt connection to server
+        # logger.info('Connection established.')
         full_msg = b''  # create empty variable
         new_msg = True  # set new_msg flag
         while True:
-            msg = s.recv(16)  # buffer size 16 bytes for incoming message
+            msg = _s.recv(16)  # buffer size 16 bytes for incoming message
             if new_msg:
                 msg_len = int(msg[:HEADERSIZE])  # convert value in HEADER(expected message length) to int
                 new_msg = False  # clear new_msg flag
@@ -362,22 +371,22 @@ def comms():
                 full_msg = b""  # clear/empty message
             if new_msg:
                 break
-        s.close()
-        logger.info('Socket closed.')
+        # s.close()
+        logger.info('Exiting comms()')
         return matrix_received
-    
+
     except socket.error as e:
-        #print "Socket Error: %s" % e
+        # print "Socket Error: %s" % e
         logger.info("Socket Error: %s" % e)
-        s.close()
+        # s.close()
     except KeyboardInterrupt as e:
-        #print("KeyboardInterrupt has been caught.")
+        # print("KeyboardInterrupt has been caught.")
         logger.info("Keyboard Error: %s" % e)
-        s.close()
+        # s.close()
     except Exception as e:
-        #print "Generic error: %s" % e
+        # print "Generic error: %s" % e
         logger.info("Generic Error: %s" % e)
-        s.close()
+        # s.close()
 
 
 ####### MAIN #######
@@ -385,16 +394,23 @@ def comms():
 if __name__ == '__main__':
 
     try:
-        matrix_3d = comms()  #  request matrix of data from server
-        curses.wrapper(draw, matrix_3d)  # executes draw function with curses
+        matrix_received = 0
+        s = socket.socket(IPV4, TCP)  # create socket object
+        logger.info('Connecting to server.')
+        s.connect((IPADDRESS, PORT))  # waits here and attempt connection to server
+        logger.info('Connection established.')
+
+        matrix_3d = comms(s)  # request matrix of data from server
+        curses.wrapper(draw, matrix_3d, s)  # executes draw function with curses
 
     except Exception as e:
         logger.info("Error: %s" % e)
         logger.info('Server has ended.')
 
     finally:
+        s.close()
+        logger.info('Socket closed.')
         logger.info('Server has ended.')
-
 
 ####### END OF MAIN #######
 
