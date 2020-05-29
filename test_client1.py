@@ -22,8 +22,8 @@ IPV4 = socket.AF_INET
 TCP = socket.SOCK_STREAM
 PORT = 12345
 # IPADDRESS = 'dbelab04'
-# IPADDRESS = 'cmc2.cbf.mkat.karoo.kat.ac.za'
-IPADDRESS = 'localhost'  # localhost or 127.0.0.1
+IPADDRESS = 'cmc2.cbf.mkat.karoo.kat.ac.za'
+# IPADDRESS = 'localhost'  # localhost or 127.0.0.1
 
 # Setup the logger
 # loglevel = 'WARNING'
