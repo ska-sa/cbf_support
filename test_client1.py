@@ -26,32 +26,28 @@ IPADDRESS = 'cmc2.cbf.mkat.karoo.kat.ac.za'
 # IPADDRESS = 'localhost'  # localhost or 127.0.0.1
 
 # Setup the logger
-# loglevel = 'WARNING'
-# logger = logging.getLogger('mellanox_switch_comms')
-# level = logging.getLevelName(loglevel)
-# logger.setLevel(level)
-# fmt = '%(asctime)s %(levelname)s %(funcName)s: %(message)s'
-# #fmt = '%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s'
-# #fmt = '%(asctime)s %(levelname)s: %(message)s %(threadName)s'
-# date_fmt = '%Y-%m-%d %H:%M:%S'
-# logging_format = logging.Formatter(fmt, date_fmt)
-# handler = logging.StreamHandler()
-# handler.setFormatter(logging_format)
-# handler.setLevel(level)
-# logger.addHandler(handler)
-loglevel = 'INFO'
 logger = logging.getLogger('__name__')
-level = logging.getLevelName(loglevel)
-logger.setLevel(level)
+level_info = logging.getLevelName('INFO')
+level_debug = logging.getLevelName('DEBUG')
+level_error = logging.getLevelName('ERROR')
+logger.setLevel(level_debug)
 # fmt = '%(asctime)s %(funcName)s:%(lineno)d %(message)s'
 # fmt = '%(asctime)s %(levelname)s: %(message)s'
 fmt = '%(asctime)s %(levelname)s - %(funcName)s: %(message)s'
 date_fmt = '%Y-%m-%d %H:%M:%S'
 logging_format = logging.Formatter(fmt, date_fmt)
-file_handler = handlers.RotatingFileHandler('clientlog.log', maxBytes=10000, backupCount=2)
+
+handler = logging.StreamHandler()
+handler.setFormatter(logging_format)
+handler.setLevel(level_error)
+logger.addHandler(handler)
+
+file_handler = handlers.RotatingFileHandler('serverlog.log', maxBytes=10000, backupCount=2)
+# file_handler = logging.FileHandler('log.txt')
 file_handler.setFormatter(logging_format)
-file_handler.setLevel(level)
+file_handler.setLevel(level_info)
 logger.addHandler(file_handler)
+
 
 
 ####### FUNCTIONS #########
