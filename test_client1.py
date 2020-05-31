@@ -332,10 +332,14 @@ def draw(stdscr, _matrix_3d, s):
             row_title.refresh(rminrow, rmincol, rtminrow, rtmincol, rtmaxrow, rtmaxcol)
             top_cornr.refresh(0, 0, 0, 0, 1, colw - 1)
     except KeyboardInterrupt as e:
+        stdscr.clear()
+        stdscr.refresh()
         logger.exception('Keyboard Error: %s' % e)
         logger.info('end of draw')
         # pass
     except Exception as e:
+        stdscr.clear()
+        stdscr.refresh()
         logger.exception('General Error: %s' % e)
         logger.info('end of draw')
 
