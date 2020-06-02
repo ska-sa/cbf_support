@@ -12,6 +12,7 @@ import curses
 # import threading
 from multiprocessing.pool import ThreadPool
 import datetime
+from optparse import OptionParser
 
 # import IPython
 
@@ -22,7 +23,7 @@ IPV4 = socket.AF_INET
 TCP = socket.SOCK_STREAM
 PORT = 12345
 # IPADDRESS = 'dbelab04'
-IPADDRESS = 'cmc2.cbf.mkat.karoo.kat.ac.za'
+#IPADDRESS = 'cmc2.cbf.mkat.karoo.kat.ac.za'
 # IPADDRESS = 'localhost'  # localhost or 127.0.0.1
 
 # Setup the logger
@@ -393,11 +394,33 @@ def comms(_s):
 
 if __name__ == '__main__':
 
+    desc = """This client program connects to a server via SSH and receives a matrix of data containing
+Mellanox spine and leaf switch data rates, error and discard information."""
+    parser = OptionParser(description=desc)
+    parser.set_usage('%prog [options]')
+    parser.add_option('-s', dest='server', type=str, default='cmc2',
+                      help='cmc1, cmc2, cmc3 or address of server. Default = cmc2.')
+
+    opts, args = parser.parse_args()
+
+
+
+    if opts.server == 'cmc1':
+        ipaddress = 'cmc1.cbf.mkat.karoo.kat.ac.za'
+    elif opts.server == 'cmc2':
+        ipaddress = 'cmc2.cbf.mkat.karoo.kat.ac.za'
+    elif opts.server == 'cmc3':
+        ipaddress = 'cmc3.cbf.mkat.karoo.kat.ac.za'
+    else:
+        ipaddress = opts.server
+
     try:
         matrix_received = 0
         s = socket.socket(IPV4, TCP)  # create socket object
+        print 'Trying to connect to server {}...'.format(ipaddress)
         logger.info('Connecting to server.')
-        s.connect((IPADDRESS, PORT))  # waits here and attempt connection to server
+        s.connect((ipaddress, PORT))  # waits here and attempt connection to server
+        print '\nConnection established.'
         logger.info('Connection established.')
 
         matrix_3d = comms(s)  # request matrix of data from server
