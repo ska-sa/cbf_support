@@ -22,9 +22,9 @@ HEADERSIZE = 10
 IPV4 = socket.AF_INET
 TCP = socket.SOCK_STREAM
 PORT = 12345
-# IPADDRESS = 'dbelab04'
+#IPADDRESS = 'dbelab04'
 #IPADDRESS = 'cmc2.cbf.mkat.karoo.kat.ac.za'
-# IPADDRESS = 'localhost'  # localhost or 127.0.0.1
+#IPADDRESS = 'localhost'  # localhost or 127.0.0.1
 
 # Setup the logger
 logger = logging.getLogger('__name__')
@@ -38,13 +38,8 @@ fmt = '%(asctime)s %(levelname)s - %(funcName)s: %(message)s'
 date_fmt = '%Y-%m-%d %H:%M:%S'
 logging_format = logging.Formatter(fmt, date_fmt)
 
-handler = logging.StreamHandler()
-handler.setFormatter(logging_format)
-handler.setLevel(level_error)
-logger.addHandler(handler)
-
-file_handler = handlers.RotatingFileHandler('serverlog.log', maxBytes=10000, backupCount=2)
-# file_handler = logging.FileHandler('log.txt')
+# Configure logging to file
+file_handler = handlers.RotatingFileHandler('clientlog.log', maxBytes=10000, backupCount=2)
 file_handler.setFormatter(logging_format)
 file_handler.setLevel(level_info)
 logger.addHandler(file_handler)
@@ -333,17 +328,7 @@ def draw(stdscr, _matrix_3d, s):
             row_title.refresh(rminrow, rmincol, rtminrow, rtmincol, rtmaxrow, rtmaxcol)
             top_cornr.refresh(0, 0, 0, 0, 1, colw - 1)
     except KeyboardInterrupt as e:
-        stdscr.clear()
-        stdscr.refresh()
-        logger.exception('Keyboard Error: %s' % e)
-        logger.info('end of draw')
-        # pass
-    except Exception as e:
-        stdscr.clear()
-        stdscr.refresh()
-        logger.exception('General Error: %s' % e)
-        logger.info('end of draw')
-
+        logger.info("KeyboardInterrupt Error: %s" % e)
 
 def comms(_s):
     try:
@@ -420,20 +405,20 @@ Mellanox spine and leaf switch data rates, error and discard information."""
         print 'Trying to connect to server {}...'.format(ipaddress)
         logger.info('Connecting to server.')
         s.connect((ipaddress, PORT))  # waits here and attempt connection to server
-        print '\nConnection established.'
+        print 'Connection established.'
         logger.info('Connection established.')
 
         matrix_3d = comms(s)  # request matrix of data from server
         curses.wrapper(draw, matrix_3d, s)  # executes draw function with curses
 
     except Exception as e:
-        logger.info("Error: %s" % e)
-        logger.info('Server has ended.')
+        logger.exception("Generic Error: %s" % e)
+        print 'Error: %s', e
 
     finally:
         s.close()
-        logger.info('Socket closed.')
-        logger.info('Server has ended.')
+        logger.info('Socket closed. Server has ended.')
+        print 'Socket closed. Server has ended.'
 
 ####### END OF MAIN #######
 
