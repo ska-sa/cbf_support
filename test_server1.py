@@ -1,5 +1,5 @@
-#reduced cpu usage of server
 #!/usr/bin/python
+#reduced cpu usage of server
 '''
 This class allows you to run commands on a remote host and provide
 input if necessary.

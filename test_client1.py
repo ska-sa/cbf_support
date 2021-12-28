@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # reduced cpu usage of client
 
 import socket
